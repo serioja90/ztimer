@@ -10,6 +10,15 @@ module Ztimer
       @callback    = callback
       @started_at  = nil
       @executed_at = nil
+      @canceled    = false
+    end
+
+    def canceled?
+      return @canceled
+    end
+
+    def cancel!
+      @canceled = true
     end
 
     def <=>(other)

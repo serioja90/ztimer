@@ -1,17 +1,19 @@
 require 'set'
 require 'hitimes'
+require 'thread_safe'
 require "ztimer/version"
+require "ztimer/sorted_store"
 require "ztimer/slot"
 
 module Ztimer
-  @concurrency = 20
-  @slots       = SortedSet.new
-  @metric      = Hitimes::Metric.new("Notifier")
-  @monitor     = nil
-  @running     = 0
-  @lock        = Mutex.new
-  @mutex       = Mutex.new
-  @queue       = Queue.new
+  @concurrency  = 20
+  @slots        = Ztimer::SortedStore.new
+  @metric       = Hitimes::Metric.new("Notifier")
+  @monitor      = nil
+  @running      = 0
+  @workers_lock = Mutex.new
+  @io_lock      = Mutex.new
+  @queue        = Queue.new
 
   class << self
     attr_reader :concurrency, :running
@@ -20,6 +22,7 @@ module Ztimer
       enqueued_at = @metric.utc_microseconds
       expires_at  = enqueued_at + milliseconds * 1000
       slot        = Slot.new(enqueued_at, expires_at, &callback)
+
       add(slot)
 
       return slot
@@ -37,28 +40,30 @@ module Ztimer
     protected
 
     def add(slot)
-      @mutex.synchronize do
+      @io_lock.synchronize do
         @slots << slot
         restart_monitor if @slots.first == slot || @monitor.nil? || !@monitor.alive?
       end
     end
 
     def restart_monitor
-      @monitor.kill if @monitor
+      if @monitor && @monitor.status == "sleep"
+        @monitor.kill
+      else
+        return if @monitor
+      end
 
       @monitor = Thread.new do
         loop do
-          break if @slots.empty?
+          delay = @io_lock.synchronize { @slots.empty? ? nil : @slots.first.expires_at - @metric.utc_microseconds }
+          break if delay.nil?
 
-          delay = @slots.first.expires_at - @metric.utc_microseconds
           select(nil, nil, nil, delay / 1_000_000.to_f) if delay > 1 # 1 microsecond of cranularity
 
-          while @slots.first && (@slots.first.expires_at < @metric.utc_microseconds) do
-            @mutex.synchronize do
-              slot = @slots.first
+          @io_lock.synchronize do
+            while slot = get_first_expired do
               slot.started_at = @metric.utc_microseconds
               execute(slot)
-              @slots.delete slot
             end
           end
         end
@@ -66,10 +71,19 @@ module Ztimer
       @monitor.abort_on_exception = true
     end
 
+    def get_first_expired
+      slot = @slots.first
+      if slot && (slot.expires_at < @metric.utc_microseconds)
+        @slots.shift
+      end
+
+      return slot
+    end
+
     def execute(slot)
       @queue.push slot
 
-      @lock.synchronize do
+      @workers_lock.synchronize do
         [@concurrency - @running, @queue.size].min.times do
           @running += 1
           worker = Thread.new do
@@ -81,7 +95,7 @@ module Ztimer
             rescue => e
               STDERR.puts e.inspect + (e.backtrace ? "\n" + e.backtrace.join("\n") : "")
             end
-            @lock.synchronize { @running -= 1 }
+            @workers_lock.synchronize { @running -= 1 }
           end
           worker.abort_on_exception = true
         end
