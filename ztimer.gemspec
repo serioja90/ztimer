@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{An asyncrhonous timer}
   spec.description   = %q{Ruby asyncrhonous timer that allows you to enqueue tasks to be executed asyncrhonously after a delay}
   spec.homepage      = "https://github.com/serioja90/ztimer"
+  spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
   # delete this section to allow pushing this gem to any host.
