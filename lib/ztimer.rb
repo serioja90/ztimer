@@ -74,6 +74,7 @@ module Ztimer
           worker = Thread.new do
             begin
               while !@queue.empty? && (slot = @queue.pop(true))
+                slot.executed_at = @metric.utc_microseconds
                 slot.callback.call(slot) unless slot.callback.nil?
               end
             rescue => e
