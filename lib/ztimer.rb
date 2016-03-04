@@ -17,8 +17,9 @@ module Ztimer
     attr_reader :concurrency, :running
 
     def after(milliseconds, &callback)
-      expires_at   = @metric.utc_microseconds + milliseconds * 1000
-      slot = Slot.new(expires_at, &callback)
+      enqueued_at = @metric.utc_microseconds
+      expires_at  = enqueued_at + milliseconds * 1000
+      slot        = Slot.new(enqueued_at, expires_at, &callback)
       add(slot)
 
       return slot

@@ -1,10 +1,11 @@
 
 module Ztimer
   class Slot
-    attr_reader :expires_at, :callback
+    attr_reader :enqueued_at, :expires_at, :callback
     attr_accessor :started_at, :executed_at
 
-    def initialize(expires_at, &callback)
+    def initialize(enqueued_at, expires_at, &callback)
+      @enqueued_at = enqueued_at
       @expires_at  = expires_at
       @callback    = callback
       @started_at  = nil
