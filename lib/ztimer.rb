@@ -1,6 +1,5 @@
 require 'set'
 require 'hitimes'
-require 'pqueue'
 require 'lounger'
 
 require "ztimer/version"
