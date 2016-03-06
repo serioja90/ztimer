@@ -9,9 +9,7 @@ module Ztimer
       @callback = callback
       @lock     = Mutex.new
       @metric   = Hitimes::Metric.new("Notifier")
-
-      @mutex = Mutex.new
-      @count = 0
+      @mutex    = Mutex.new
     end
 
     def << (slot)
@@ -67,8 +65,6 @@ module Ztimer
         slot = @slots.first
         if slot && (slot.expires_at < @metric.utc_microseconds)
           @slots.shift
-          @count += 1
-          puts @count
           slot.started_at = @metric.utc_microseconds
           execute(slot) unless slot.canceled?
         end
