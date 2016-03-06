@@ -48,7 +48,7 @@ module Ztimer
       else
         position = ((stop + start)/ 2).to_i
         case value <=> @store[position]
-        when -1 then return index_of(value, start, position - 1)
+        when -1 then return index_of(value, start, position)
         when  0 then return position
         when  1 then return index_of(value, position + 1, stop)
         end
@@ -87,7 +87,7 @@ module Ztimer
       else
         position = ((stop + start)/ 2).to_i
         case item <=> @store[position]
-        when -1 then return position_for(item, start, position - 1)
+        when -1 then return position_for(item, start, position)
         when  0 then return position
         when  1 then return position_for(item, position + 1, stop)
         end
