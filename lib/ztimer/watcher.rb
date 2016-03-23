@@ -67,6 +67,8 @@ module Ztimer
           @slots.shift
           slot.started_at = @metric.utc_microseconds
           execute(slot) unless slot.canceled?
+        else
+          slot = nil
         end
 
         slot
