@@ -27,10 +27,19 @@ is illustrated below:
 ```ruby
 require 'ztimer'
 
-delay = 5000 # milliseconds
+delay = 1000 # milliseconds
 Ztimer.after(delay) do
   puts "Doing something useful..."
 end
+
+# Recurrent jobs
+job = Ztimer.every(delay) do # execute the block every second
+  puts "Executing a recurrent job..."
+end
+
+sleep 10    # wait for 10 seconds (10 executions)
+job.cancel! # cancel the recurrent job
+
 ```
 
 By default **Ztimer** will run at maximum 20 notifications concurrently, so that if you have 100 notifications to be
