@@ -17,7 +17,17 @@ module Ztimer
     def after(milliseconds, &callback)
       enqueued_at = utc_microseconds
       expires_at  = enqueued_at + milliseconds * 1000
-      slot        = Slot.new(enqueued_at, expires_at, &callback)
+      slot        = Slot.new(enqueued_at, expires_at, -1, &callback)
+
+      add(slot)
+
+      return slot
+    end
+
+    def every(milliseconds, &callback)
+      enqueued_at = @metric.utc_microseconds
+      expires_at  = enqueued_at + milliseconds * 1000
+      slot        = Slot.new(enqueued_at, expires_at, milliseconds * 1000, &callback)
 
       add(slot)
 

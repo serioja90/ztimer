@@ -69,7 +69,13 @@ module Ztimer
         if slot && (slot.expires_at < utc_microseconds)
           @slots.shift
           slot.started_at = utc_microseconds
-          execute(slot) unless slot.canceled?
+          unless slot.canceled?
+            execute(slot)
+            if slot.recurrent?
+              slot.reset!
+              @slots << slot
+            end
+          end
         else
           slot = nil
         end
