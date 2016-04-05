@@ -1,7 +1,3 @@
-require 'set'
-require 'hitimes'
-require 'lounger'
-
 require "ztimer/version"
 require "ztimer/slot"
 require "ztimer/sorted_store"
@@ -10,7 +6,6 @@ require "ztimer/watcher"
 module Ztimer
   @concurrency  = 20
   @watcher      = Ztimer::Watcher.new(){|slot| execute(slot) }
-  @metric       = Hitimes::Metric.new("Notifier")
   @workers_lock = Mutex.new
   @queue        = Queue.new
   @running      = 0
@@ -20,7 +15,7 @@ module Ztimer
     attr_reader :concurrency, :running, :count
 
     def after(milliseconds, &callback)
-      enqueued_at = @metric.utc_microseconds
+      enqueued_at = utc_microseconds
       expires_at  = enqueued_at + milliseconds * 1000
       slot        = Slot.new(enqueued_at, expires_at, &callback)
 
@@ -55,7 +50,7 @@ module Ztimer
           worker = Thread.new do
             begin
               while !@queue.empty? && @queue.pop(true) do
-                slot.executed_at = @metric.utc_microseconds
+                slot.executed_at = utc_microseconds
                 slot.callback.call(slot) unless slot.callback.nil?
               end
             rescue ThreadError
@@ -69,6 +64,10 @@ module Ztimer
           worker.abort_on_exception = true
         end
       end
+    end
+
+    def utc_microseconds
+      return Time.now.to_f * 1_000_000
     end
   end
 end

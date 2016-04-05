@@ -4,11 +4,9 @@ module Ztimer
 
     def initialize(&callback)
       @thread   = nil
-      @idler    = Lounger.new
       @slots    = Ztimer::SortedStore.new
       @callback = callback
       @lock     = Mutex.new
-      @metric   = Hitimes::Metric.new("Notifier")
       @mutex    = Mutex.new
     end
 
@@ -29,7 +27,8 @@ module Ztimer
 
     def run
       if @thread
-        @idler.signal && @thread.run
+        @thread.wakeup
+        @thread.run
       else
         start
       end
@@ -40,15 +39,19 @@ module Ztimer
         return if @thread
         @thread = Thread.new do
           loop do
-            delay = get_delay
-            if delay.nil?
-              @idler.wait
-              next
-            end
+            begin
+              delay = get_delay
+              if delay.nil?
+                Thread.stop
+                next
+              end
 
-            select(nil, nil, nil, delay / 1_000_000.to_f) if delay > 1 # 1 microsecond of cranularity
+              select(nil, nil, nil, delay / 1_000_000.to_f) if delay > 1 # 1 microsecond of cranularity
 
-            while get_first_expired do
+              while get_first_expired do
+              end
+            rescue => e
+              puts e.inspect + "\n" + e.backtrace.join("\n")
             end
           end
         end
@@ -57,15 +60,15 @@ module Ztimer
     end
 
     def get_delay
-      return @mutex.synchronize { @slots.empty? ? nil : @slots.first.expires_at - @metric.utc_microseconds }
+      return @mutex.synchronize { @slots.empty? ? nil : @slots.first.expires_at - utc_microseconds }
     end
 
     def get_first_expired
       @mutex.synchronize do
         slot = @slots.first
-        if slot && (slot.expires_at < @metric.utc_microseconds)
+        if slot && (slot.expires_at < utc_microseconds)
           @slots.shift
-          slot.started_at = @metric.utc_microseconds
+          slot.started_at = utc_microseconds
           execute(slot) unless slot.canceled?
         else
           slot = nil
@@ -77,6 +80,10 @@ module Ztimer
 
     def execute(slot)
       @callback.call(slot)
+    end
+
+    def utc_microseconds
+      return Time.now.to_f * 1_000_000
     end
   end
 end
