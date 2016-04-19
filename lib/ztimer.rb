@@ -39,7 +39,7 @@ module Ztimer
     end
 
     def concurrency=(new_value)
-      raise ArgumentError.new("Invalid concurrency value: #{new_value}") unless new_value.is_a?(Fixnum) && new_value > 1
+      raise ArgumentError.new("Invalid concurrency value: #{new_value}") unless new_value.is_a?(Fixnum) && new_value >= 1
       @concurrency = new_value
     end
 
@@ -59,7 +59,7 @@ module Ztimer
           @running += 1
           worker = Thread.new do
             begin
-              while !@queue.empty? && @queue.pop(true) do
+              while !@queue.empty? && (slot = @queue.pop(true)) do
                 slot.executed_at = utc_microseconds
                 slot.callback.call(slot) unless slot.callback.nil?
               end
