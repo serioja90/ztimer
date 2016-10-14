@@ -32,6 +32,12 @@ Ztimer.after(delay) do
   puts "Doing something useful..."
 end
 
+# Async execution
+Ztimer.async do
+  # this code will be executed in background asyncronously
+  puts "Doing something useful in background..."
+end
+
 # Recurrent jobs
 job = Ztimer.every(delay) do # execute the block every second
   puts "Executing a recurrent job..."
@@ -42,15 +48,12 @@ job.cancel! # cancel the recurrent job
 
 ```
 
-By default **Ztimer** will run at maximum 20 notifications concurrently, so that if you have 100 notifications to be
-executed at the same time, at maximum 20 of them will run at the same time. This is necessary in order to prevent uncontrolled
-threads spawn when many notifications have to be sent at the same time.
+By default **Ztimer** will run at maximum 20 jobs concurrently, so that if you have 100 jobs to be
+executed at the same time, at maximum 20 of them will run at the same time. This is necessary in order to prevent uncontrolled threads spawn when many jobs have to be sent at the same time.
 
-Anyway, you can change the concurrency by calling `Ztimer.concurrency = <concurrency>`, where `<concurrency>` is the maximum number
-of `Ztimer` workers allowed to run in parallel (ex: `Ztimer.concurrency = 50`).
+Anyway, you can change the concurrency by calling `Ztimer.concurrency = <concurrency>`, where `<concurrency>` is the maximum number of `Ztimer` workers allowed to run in parallel (ex: `Ztimer.concurrency = 50`).
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/serioja90/ztimer. This project is intended to be a safe,
-welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
+Bug reports and pull requests are welcome on GitHub at https://github.com/serioja90/ztimer. This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the [Contributor Covenant](http://contributor-covenant.org) code of conduct.
 
