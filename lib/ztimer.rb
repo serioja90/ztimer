@@ -7,12 +7,23 @@ module Ztimer
   @concurrency  = 20
   @watcher      = Ztimer::Watcher.new(){|slot| execute(slot) }
   @workers_lock = Mutex.new
+  @count_lock   = Mutex.new
   @queue        = Queue.new
   @running      = 0
   @count        = 0
 
   class << self
-    attr_reader :concurrency, :running, :count
+    attr_reader :concurrency, :running, :count, :watcher, :queue
+
+    def async(&callback)
+      enqueued_at = utc_microseconds
+      slot        = Slot.new(enqueued_at, enqueued_at, -1, &callback)
+
+      incr_counter!
+      execute(slot)
+
+      return slot
+    end
 
     def after(milliseconds, &callback)
       enqueued_at = utc_microseconds
@@ -43,13 +54,26 @@ module Ztimer
       @concurrency = new_value
     end
 
+
+    def stats
+      {
+        running:   @running,
+        scheduled: @watcher.jobs,
+        executing: @queue.size,
+        total:     @count
+      }
+    end
+
     protected
 
     def add(slot)
-      @count += 1
+      incr_counter!
       @watcher << slot
     end
 
+    def incr_counter!
+      @count_lock.synchronize{ @count += 1 }
+    end
 
     def execute(slot)
       @queue << slot
@@ -57,23 +81,34 @@ module Ztimer
       @workers_lock.synchronize do
         [@concurrency - @running, @queue.size].min.times do
           @running += 1
-          worker = Thread.new do
+          start_new_thread!
+        end
+      end
+    end
+
+    def start_new_thread!
+      worker = Thread.new do
+        begin
+          loop do
+            current_slot = nil
+            @workers_lock.synchronize do
+              current_slot = @queue.pop(true) unless @queue.empty?
+            end
+            break if current_slot.nil?
+
             begin
-              while !@queue.empty? && (slot = @queue.pop(true)) do
-                slot.executed_at = utc_microseconds
-                slot.callback.call(slot) unless slot.callback.nil?
-              end
-            rescue ThreadError
-              # queue is empty
-              puts "queue is empty"
+              current_slot.executed_at = utc_microseconds
+              current_slot.callback.call(current_slot) unless current_slot.callback.nil? || current_slot.canceled?
             rescue => e
               STDERR.puts e.inspect + (e.backtrace ? "\n" + e.backtrace.join("\n") : "")
             end
-            @workers_lock.synchronize { @running -= 1 }
           end
-          worker.abort_on_exception = true
+        rescue ThreadError
+          puts "queue is empty"
         end
+        @workers_lock.synchronize { @running -= 1 }
       end
+      worker.abort_on_exception = true
     end
 
     def utc_microseconds
