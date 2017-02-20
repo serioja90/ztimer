@@ -1,5 +1,5 @@
 
-module Ztimer
+class Ztimer
   class Watcher
 
     def initialize(&callback)
