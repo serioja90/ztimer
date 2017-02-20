@@ -1,5 +1,5 @@
 
-module Ztimer
+class Ztimer
   class Slot
     attr_reader :enqueued_at, :expires_at, :recurrency, :callback
     attr_accessor :started_at, :executed_at
