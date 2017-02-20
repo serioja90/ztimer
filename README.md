@@ -1,7 +1,9 @@
 # Ztimer
 
-**Ztimer** is a Ruby gem that allows to get asynchronous delayed notifications. You can enqueue callbacks to be
-called after some amount of time.
+**Ztimer** is a simple Ruby implementation of an asynchronous timer, that allows to enqueue the execution of Ruby
+code, so that it will be asynchronously executed on timeout. It's very useful when you need a simple way to execute
+some code asynchronously or with a certain delay.
+
 
 ## Installation
 
@@ -57,9 +59,9 @@ end
 ```
 
 By default **Ztimer** will run at maximum 20 jobs concurrently, so that if you have 100 jobs to be
-executed at the same time, at maximum 20 of them will run at the same time. This is necessary in order to prevent uncontrolled threads spawn when many jobs have to be sent at the same time.
+executed at the same time, at most 20 of them will run concurrently. This is necessary in order to prevent uncontrolled threads spawn when many jobs have to be run at the same time.
 
-Anyway, you can change the concurrency by calling `Ztimer.concurrency = <concurrency>`, where `<concurrency>` is the maximum number of `Ztimer` workers allowed to run in parallel (ex: `Ztimer.concurrency = 50`).
+Anyway, you can change the concurrency level by calling `Ztimer.concurrency = <concurrency>`, where `<concurrency>` is the maximum number of `Ztimer` workers allowed to run in parallel (ex: `Ztimer.concurrency = 50`).
 
 If you're using custom **Ztimer** instance, you can specify the concurrency while creating the new instance:
 
