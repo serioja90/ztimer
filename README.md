@@ -46,12 +46,12 @@ end
 sleep 10    # wait for 10 seconds (10 executions)
 job.cancel! # cancel the recurrent job
 
-# Separate instance of Ztimer
-timer = Ztimer.new(concurrency: 5)
+# Custom Ztimer instance
+my_timer = Ztimer.new(concurrency: 5) # create a new Ztimer instance
 10.times do
-  timer.async do
-    # t
-    puts "Doing async job"
+  # Use the custom ztimer to execute jobs asynchronously
+  my_timer.async do
+    puts "Doing async job..."
   end
 end
 ```
@@ -60,6 +60,12 @@ By default **Ztimer** will run at maximum 20 jobs concurrently, so that if you h
 executed at the same time, at maximum 20 of them will run at the same time. This is necessary in order to prevent uncontrolled threads spawn when many jobs have to be sent at the same time.
 
 Anyway, you can change the concurrency by calling `Ztimer.concurrency = <concurrency>`, where `<concurrency>` is the maximum number of `Ztimer` workers allowed to run in parallel (ex: `Ztimer.concurrency = 50`).
+
+If you're using custom **Ztimer** instance, you can specify the concurrency while creating the new instance:
+
+```ruby
+my_timer = Ztimer.new(concurrency: 42) # create a ztimer with concurrency set to 42
+```
 
 ## Contributing
 
