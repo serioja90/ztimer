@@ -58,6 +58,20 @@ my_timer = Ztimer.new(concurrency: 5) # create a new Ztimer instance
 end
 ```
 
+| Method | Description  |
+|--------|-------------|
+| `async(&block)` | Execute the block asynchronously. |
+| `after(milliseconds, &block)` | Execute the block after the specified amount of milliseconds. |
+| `at(datetime, &block)` | Execute the block at the specified timestamp. |
+| `every(milliseconds, start_at: nil, &block)` | Execute the block at the specified interval of milliseconds. A custom `:start_at` param could be provided to specify an offset timestamp. |
+| `secondly(seconds, offset: 0, &block)` | Executes the block every N seconds. An `:offset` of seconds could be specified to shift the begining of the time slot. By default the block will be exected at the begining of the time slot. Example: `secondly(5)` will run at second `0`, `5`, `10`, `15`, etc. |
+| `minutely(minutes, offset: 0, &block)` | Executes the block every N minutes. An `:offset` of minutes could be specified to shift the begining of the time slot. By default the block will be exected at the begining of the time slot. Example: `minutely(5)` will run at minute `0`, `5`, `10`, `15`, etc. |
+| `hourly(hours, offset: 0, &block)` | Executes the block every N hours. An `:offset` of hours could be specified to shift the begining of the time slot. By default the block will be exected at the begining of the time slot. Example: `hourly(5)` will run at hour `0`, `5`, `10`, `15`, etc. |
+| `daily(days, offset: 0, &block)` | Executes the block every N days. An `:offset` of days could be specified to shift the begining of the time slot. By default the block will be exected at the begining of the time slot. Example: `daily(5)` will run on day `0`, `5`, `10`, `15`, etc. |
+| `day_of_week(day, &block)` | Execute the block only on the specified day of week. Valid days are: `"sun", "mon", "tue", "thu", "wen", "fri", "sat"`. |
+| `days_of_week(days, &block)` | Execute the block on the specified days of week. |
+
+
 By default **Ztimer** will run at maximum 20 jobs concurrently, so that if you have 100 jobs to be
 executed at the same time, at most 20 of them will run concurrently. This is necessary in order to prevent uncontrolled threads spawn when many jobs have to be run at the same time.
 
