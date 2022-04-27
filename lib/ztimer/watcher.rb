@@ -1,7 +1,9 @@
+# frozen_string_literal: true
 
 class Ztimer
+  # Implements a watcher which allows to enqueue Ztimer::Slot items, that will be executed
+  # as soon as the time of Ztimer::Slot is reached.
   class Watcher
-
     def initialize(&callback)
       @thread   = nil
       @slots    = Ztimer::SortedStore.new
@@ -10,17 +12,15 @@ class Ztimer
       @mutex    = Mutex.new
     end
 
-    def << (slot)
+    def <<(slot)
       @mutex.synchronize do
         @slots << slot
-        if @slots.first == slot
-          run
-        end
+        run if @slots.first == slot
       end
     end
 
     def jobs
-      return @slots.size
+      @slots.size
     end
 
     protected
@@ -37,10 +37,11 @@ class Ztimer
     def start
       @lock.synchronize do
         return if @thread
+
         @thread = Thread.new do
           loop do
             begin
-              delay = get_delay
+              delay = calculate_delay
               if delay.nil?
                 Thread.stop
                 next
@@ -48,10 +49,10 @@ class Ztimer
 
               select(nil, nil, nil, delay / 1_000_000.to_f) if delay > 1 # 1 microsecond of cranularity
 
-              while get_first_expired do
+              while fetch_first_expired
               end
-            rescue => e
-              puts e.inspect + "\n" + e.backtrace.join("\n")
+            rescue StandardError => e
+              puts "#{e.inspect}\n#{e.backtrace.join("\n")}"
             end
           end
         end
@@ -59,11 +60,11 @@ class Ztimer
       end
     end
 
-    def get_delay
-      return @mutex.synchronize { @slots.empty? ? nil : @slots.first.expires_at - utc_microseconds }
+    def calculate_delay
+      @mutex.synchronize { @slots.empty? ? nil : @slots.first.expires_at - utc_microseconds }
     end
 
-    def get_first_expired
+    def fetch_first_expired
       @mutex.synchronize do
         slot = @slots.first
         if slot && (slot.expires_at < utc_microseconds)
@@ -89,7 +90,7 @@ class Ztimer
     end
 
     def utc_microseconds
-      return Time.now.to_f * 1_000_000
+      Time.now.to_f * 1_000_000
     end
   end
 end
