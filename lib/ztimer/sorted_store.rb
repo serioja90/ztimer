@@ -1,95 +1,92 @@
+# frozen_string_literal: true
 
 class Ztimer
+  # Implements a performant sorted store for time slots, which uses binary search to optimize
+  # new items insertion and items retrievement.
   class SortedStore
-
     def initialize
       @store = []
     end
 
     def <<(value)
       @store.insert(position_for(value), value)
-      return self
+
+      self
     end
 
     def delete(value)
       index = index_of(value)
-      if index
-        @store.delete_at(index)
-      else
-        return nil
-      end
+
+      index.nil? ? nil : @store.delete_at(index)
     end
 
     def [](index)
-      return @store[index]
+      @store[index]
     end
 
     def first
-      return @store.first
+      @store.first
     end
 
     def last
-      return @store.last
+      @store.last
     end
 
     def shift
-      return @store.shift
+      @store.shift
     end
 
     def pop
-      return @store.pop
+      @store.pop
     end
 
     def index_of(value, start = 0, stop = [@store.count - 1, 0].max)
-      if start > stop
-        return nil
-      elsif start == stop
-        return value == @store[start] ? start : nil
-      else
-        position = ((stop + start)/ 2).to_i
-        case value <=> @store[position]
-        when -1 then return index_of(value, start, position)
-        when  0 then return position
-        when  1 then return index_of(value, position + 1, stop)
-        end
+      return nil if start > stop
+      return value == @store[start] ? start : nil if start == stop
+
+      position = ((stop + start) / 2).to_i
+
+      case value <=> @store[position]
+      when -1 then index_of(value, start, position)
+      when  0 then position
+      when  1 then index_of(value, position + 1, stop)
       end
     end
 
     def count
-      return @store.count
+      @store.count
     end
 
     def size
-      return @store.size
+      @store.size
     end
 
     def empty?
-      return @store.empty?
+      @store.empty?
     end
 
     def clear
-      return @store.clear
+      @store.clear
     end
 
     def to_a
-      return @store.dup
+      @store.dup
     end
-
 
     protected
 
     def position_for(item, start = 0, stop = [@store.count - 1, 0].max)
-      if start > stop
-        raise "Invalid range (#{start}, #{stop})"
-      elsif start == stop
+      raise "Invalid range (#{start}, #{stop})" if start > stop
+
+      if start == stop
         element = @store[start]
-        return element.nil? || ((item <=> element) <= 0) ? start : start + 1
+        element.nil? || ((item <=> element) <= 0) ? start : start + 1
       else
-        position = ((stop + start)/ 2).to_i
+        position = ((stop + start) / 2).to_i
         case item <=> @store[position]
-        when -1 then return position_for(item, start, position)
-        when  0 then return position
-        when  1 then return position_for(item, position + 1, stop)
+        when -1 then position_for(item, start, position)
+        when  0 then position
+        when  1 then position_for(item, position + 1, stop)
         end
       end
     end

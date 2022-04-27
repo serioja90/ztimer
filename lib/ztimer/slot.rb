@@ -1,10 +1,12 @@
+# frozen_string_literal: true
 
 class Ztimer
+  # Implements a slot, which represents a block of code to be executed at specified time slot.
   class Slot
     attr_reader :enqueued_at, :expires_at, :recurrency, :callback
     attr_accessor :started_at, :executed_at
 
-    def initialize(enqueued_at, expires_at,recurrency = -1, &callback)
+    def initialize(enqueued_at, expires_at, recurrency = -1, &callback)
       @enqueued_at = enqueued_at
       @expires_at  = expires_at
       @recurrency  = recurrency
@@ -15,17 +17,15 @@ class Ztimer
     end
 
     def recurrent?
-      return @recurrency > 0
+      @recurrency.positive?
     end
 
     def reset!
-      if recurrent?
-        @expires_at += recurrency
-      end
+      @expires_at += recurrency if recurrent?
     end
 
     def canceled?
-      return @canceled
+      @canceled
     end
 
     def cancel!
@@ -33,7 +33,7 @@ class Ztimer
     end
 
     def <=>(other)
-      return @expires_at <=> other.expires_at
+      @expires_at <=> other.expires_at
     end
   end
 end
