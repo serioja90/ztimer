@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
 class Ztimer
-  VERSION = '1.0.0'
+  VERSION = '0.6.0'
 end
